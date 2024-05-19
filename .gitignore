@@ -1,0 +1,11 @@
+# Ignore Python bytecode files
+*.pyc
+
+# Ignore cache files
+__pycache__
+
+# Ignore virtual environment
+venv/
+
+# Ignore trained models
+models/

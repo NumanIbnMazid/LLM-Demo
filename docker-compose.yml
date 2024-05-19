@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  llama_service:
+    build: .
+    runtime: nvidia
+    volumes:
+      - .:/project
+    working_dir: /project
+    command: /entrypoint.sh
