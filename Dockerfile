@@ -1,43 +1,22 @@
 # Use the base image
 FROM flink:1.17.1
 
+# Update and install dependencies
+RUN apt-get update -y && \
+    apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev libffi-dev ffmpeg liblzma-dev lzma libgl1 gcc && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set environment variables
 ENV CONDA_INSTALLER_URL=https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     MINICONDA_DIR=/opt/miniconda \
     CONDA=/opt/miniconda/bin/conda \
     PYTHON=/opt/miniconda/envs/env/bin/python
-
-# Update and install dependencies
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    cmake \
-    wget \
-    git \
-    binutils \
-    xz-utils \
-    ca-certificates \
-    gnupg2 \
-    software-properties-common && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Add the CUDA repository and install CUDA
-RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
-    dpkg -i cuda-keyring_1.1-1_all.deb && \
-    rm cuda-keyring_1.1-1_all.deb && \
-    apt-get update && \
-    apt-get -y install cuda-toolkit-12-4
-
-# Set environment variables for CUDA
-ENV PATH="/usr/local/cuda-12.4/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/usr/local/cuda-12.4/lib64:${LD_LIBRARY_PATH}"
  
 # environment variables 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
-ENV NVIDIA_REQUIRE_CUDA "cuda>=12.4"
+ENV NVIDIA_REQUIRE_CUDA "cuda>=12.2"
 
 # Download and install Miniconda
 RUN wget $CONDA_INSTALLER_URL -O miniconda.sh && \
@@ -45,7 +24,8 @@ RUN wget $CONDA_INSTALLER_URL -O miniconda.sh && \
     rm miniconda.sh
 
 # Create a new environment named 'env'
-RUN $CONDA create -y -n env python=3.10 && \
+COPY environment.yml .
+RUN $CONDA env create -f environment.yml && \
     $CONDA clean -afy
 
 # Ensure conda is on PATH
@@ -57,14 +37,13 @@ SHELL ["conda", "run", "-n", "env", "/bin/bash", "-c"]
 # Upgrade pip
 RUN pip install --upgrade pip
 
-# Install Python requirements
-# RUN pip install Cython==3.0.10 setuptools==69.5.1 wheel==0.43.0
-
-# Install llama.cpp with cuBLAS backend
-RUN CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_CU4DA=on -DLLAMA_BLAS_VENDOR=OpenBLAS" FORCE_CMAKE=1 pip install llama-cpp-python==0.2.75
+# Install llama.cpp
+RUN CMAKE_ARGS="-DLLAMA_CUDA=on" FORCE_CMAKE=1 pip install --upgrade --force-reinstall llama-cpp-python --no-cache-dir \
+  --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122
 
 # Install langchain
-RUN pip install langchain==0.2.0 langchain-community==0.2.0
+COPY requirements.txt /requirements/requirements.txt
+RUN pip3 install -r /requirements/requirements.txt
 
 # Copy project files
 COPY . /project

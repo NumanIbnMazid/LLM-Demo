@@ -1,0 +1,9 @@
+name: env
+channels:
+  - defaults
+  - conda-forge
+  - nvidia/label/cuda-12.2.0
+dependencies:
+  - python=3.10
+  - pip
+  - cuda-toolkit
