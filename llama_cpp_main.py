@@ -3,6 +3,7 @@ from langchain_core.callbacks import CallbackManager, StreamingStdOutCallbackHan
 from langchain_core.prompts import PromptTemplate
 
 # Installation guide (GPU): https://python.langchain.com/v0.1/docs/integrations/llms/llamacpp/
+# Install: CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 pip install llama-cpp-python
 
 n_gpu_layers = -1  # The number of layers to put on the GPU. The rest will be on the CPU. If you don't know how many layers there are, you can use -1 to move all to GPU.
 n_batch = 512  # Should be between 1 and n_ctx, consider the amount of VRAM in your GPU.
